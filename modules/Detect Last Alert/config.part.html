@@ -1,0 +1,17 @@
+<table>
+    <tr>
+        <td><label>Re-check Rate <abbr title="Time, in minutes, between checks"><svg class="icon icon-info"><use xlink:href="#icon-info"></use></svg></abbr></label></td>
+        <td><input type="number" class="config-element" config-name="recheckRate" required></td>
+    </tr>
+</table>
+<div class="config-group" config-group-name="environmentThresholds">
+    <h1>Environment Thresholds</h1>
+    <input type="button" class="config-group-add" value="Add">
+    <template>
+        <label>Environment</label>
+        <input type="text" class="config-group-element" config-name="environment" placeholder="Default Environment" required>
+        <label>Threshold (hours)</label>
+        <input type="number" class="config-group-element" config-name="threshold" required>
+        <input type="button" class="config-group-remove" value="Remove">
+    </template>
+</div>

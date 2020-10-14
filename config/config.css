@@ -1,0 +1,472 @@
+ /* HTML */
+* {
+	box-sizing: border-box;
+}
+
+:root {
+	--header-bg-colour: #151518;
+	--menu-bg-colour: #232330;
+	--main-bg-colour: #1b1b22;
+	--font-colour: rgb(204, 204, 218);
+	--font-highlight-colour: rgb(154, 154, 168);
+	--input-border-highlight: #b01117; /* rgb(27, 82, 121) */
+	--input-bg: rgb(44, 44, 62);
+	--input-bg-highlight: rgb(48, 48, 69);
+	--input-group-border: hsl(240, 18%, 23%);
+	--button-bg: rgb(99, 114, 130);
+	--button-bg-hover: #7c8b9c;
+	--button-bg-red: #b01117;
+	--modal-side-border: #db141a; /* #207eed */
+	--submit-button: #b01117;
+	--submit-button-hover: #db141a; /* #4f99f1 */
+	--message-info: #207eed;
+	--message-error: #db141a;
+
+	--font-family: "Open Sans", sans-serif;
+}
+
+html {
+	scroll-behavior: smooth;
+	color: var(--font-colour);
+	height: 100%;
+	line-height: 2em;
+	font-family: var(--font-family);
+}
+
+body {
+	margin: 0;
+	min-height: 100%;
+	background-color: var(--main-bg-colour);
+}
+
+h1 {
+	font-weight: 600;
+}
+
+h2 {
+	font-weight: 500;
+}
+
+a {
+	text-decoration: none;
+	color: var(--font-colour);
+}
+
+p {
+	margin: 0;
+}
+
+a:hover {
+	color: var(--font-highlight-colour)
+}
+
+input,select,textarea {
+	background-color: var(--input-bg);
+	color: var(--font-colour);
+	border-radius: 4px;
+	border-style: none;
+	width: 25em;
+	padding: 0.25em 0.5em;
+	margin-right: 0.5em;
+	outline: none 0 transparent;
+	border: 1px solid transparent;
+	font-family: var(--font-family);
+	vertical-align: middle;
+}
+
+input:hover,select:hover,textarea:hover {
+	background-color: var(--input-bg-highlight);
+}
+
+input:focus,select:focus,textarea:focus {
+	background-color: var(--input-bg-highlight);
+	border-color: var(--input-border-highlight);
+}
+
+input[type=radio] {
+	width: 1em;
+}
+
+input[type=number] {
+	width: 5em;
+}
+
+input[type=button] {
+	width: 5em;
+	background-color: var(--button-bg);
+	color: white;
+}
+
+input[type=button]:hover, input[type=button]:focus {
+	background-color: var(--button-bg-hover);
+	border-color: transparent;
+}
+
+input[type=color] {
+	width: 3em;
+	height: 2em;
+	cursor: pointer;
+}
+
+label {
+	margin-right: 0.5em;
+	font-size: 14px;
+}
+
+input[type=button].submit {
+	background-color: var(--submit-button);
+}
+
+input[type=button].submit:hover {
+	background-color: var(--submit-button-hover);
+}
+
+/* Grid */
+.grid-container {
+	display: grid;
+	grid-template-areas:    'header header'
+							'menu main';
+	grid-template-columns: 15% 1fr;
+	grid-template-rows: 4em 1fr;
+}
+
+/* Header */
+.grid-header {
+	grid-area: header;
+	background-color: var(--header-bg-colour);
+}
+
+#icon {
+	max-width:80%;
+	max-height: 80%;
+	display:inline-block;
+	margin: -0.4em 0 0 1em;
+	vertical-align: middle;
+}
+
+.grid-header h1 {
+	display: inline-block;
+	margin: 0 0 0 0.5em;
+	line-height: 1.6em;
+	border-bottom: 2px solid var(--message-error);
+}
+
+.grid-main {
+	grid-area: main;
+	background-color: var(--main-bg-colour);
+}
+
+input[type=button].header-button {
+	float: right;
+	width: 5em;
+	height: 2em;
+	border-radius: 0;
+	margin-top: 1em
+}
+
+/* Menu */
+.grid-menu {
+	grid-area: menu;
+	background-color: var(--menu-bg-colour);
+	font-size: large;
+	font-weight: 300;
+}
+
+.grid-menu h1 {
+	margin: 0;
+	height: 3em;
+	line-height: 3em;
+	padding-left: 1em;
+	width: 100%;
+	font-size: 1em;
+	font-weight: 500;
+	background-color: var(--header-bg-colour);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+	text-align: center;
+}
+
+.grid-menu > input {
+	width: 100%;
+	height: 2em;
+	border-radius: 0;
+	font-size: 1em;
+}
+
+.grid-menu .host {
+	height: 3em;
+}
+
+.grid-menu .host.selected {
+	background-color: var(--main-bg-colour);
+}
+
+.grid-menu .host:hover,.host.selected:hover {
+	background-color: var(--input-bg-highlight);
+}
+
+.host input {
+	display: none;
+	height: 100%;
+	width: 1.5em;
+	max-width: 10%;
+	border-radius: 0;
+	padding: 0;
+	margin: 0;
+	background-color: var(--menu-bg-colour);
+	cursor: pointer;
+	float: right;
+}
+
+.host:hover input {
+	display: block;
+}
+
+.host input:hover {
+	background-color: var(--button-bg-red);
+}
+
+.host label {
+	display: inline-block;
+	line-height: 3em;
+	width: 90%;
+	margin: 0;
+	padding-left: 10%;
+	font-size: 1em;
+	vertical-align: middle;
+	cursor: pointer;
+	text-align: center;
+	cursor: pointer;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+}
+
+/* Flex */
+
+.flex-container {
+	display: flex;
+	flex-direction: column;
+}
+
+/* Main Container */
+
+.category {
+	margin-top: 2em;
+}
+
+.category > h1 {
+	font-weight: 300;
+}
+
+#main-container {
+	margin-left: 5em;
+}
+
+.module {
+	margin-top: 0.5em;
+}
+
+.module-title {
+	margin-right: 0.5em;
+	display: inline;
+}
+
+.module > form {
+	padding-left: 2em;
+}
+
+.module h1 {
+	font-size: 1.3rem;
+	font-weight: 400;
+}
+
+.module-screen {
+	filter: brightness(50%);
+	pointer-events: none;
+}
+
+.keybind {
+	width: 8em;
+	cursor: pointer;
+}
+
+.required-warning {
+	background-color: var(--button-bg-red);
+}
+
+.icon {
+	display: inline-block;
+	width: 1em;
+	height: 1em;
+	stroke-width: 0;
+	stroke: currentColor;
+	fill: currentColor;
+}
+
+.icon-book {
+	width: 1.25em;
+	height: 1.25em;
+	cursor: pointer;
+}
+
+.icon-info {
+	cursor: help;
+}
+
+/* Checkbox */
+/* Customize the label (the container) */
+.checkbox-container {
+	display: inline-block;
+	position: relative;
+	padding-left: 35px;
+	margin-bottom: 12px;
+	cursor: pointer;
+	font-size: 14px;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+}
+
+/* Hide the browser's default checkbox */
+.checkbox-container input {
+	position: absolute;
+	opacity: 0;
+	cursor: pointer;
+	height: 0;
+	width: 0;
+}
+
+/* Create a custom checkbox */
+.checkbox-checkmark {
+	position: absolute;
+	top: 0.25em;
+	left: 0;
+	height: 1.5em;
+	width: 1.5em;
+	border-style: solid;
+	border: 1px solid var(--input-border-highlight);
+	border-radius: 5px;
+	background-color: var(--input-bg);
+}
+
+/* On mouse-over, add a grey background color */
+.checkbox-container:hover input ~ .checkbox-checkmark {
+	background-color: var(--input-bg-highlight);
+	border: 1px solid var(--font-colour);
+}
+
+/* When the checkbox is checked, add a blue background */
+.checkbox-container input:checked ~ .checkbox-checkmark {
+	background-color: var(--input-border-highlight);
+	border: 1px solid var(--input-border-highlight);
+}
+
+/* When the checkbox is checked, add a blue background */
+.checkbox-container:hover input:checked ~ .checkbox-checkmark {
+	border: 1px solid var(--font-colour);
+}
+
+/* Create the checkmark/indicator (hidden when not checked) */
+.checkbox-checkmark:after {
+	content: "";
+	position: absolute;
+	display: none;
+}
+
+/* Show the checkmark when checked */
+.checkbox-container input:checked ~ .checkbox-checkmark:after {
+	display: block;
+}
+
+/* Style the checkmark/indicator */
+.checkbox-container .checkbox-checkmark:after {
+	left: 0.4em;
+	top: 0em;
+	width: 0.3em;
+	height: 1em;
+	border: solid var(--font-colour);
+	border-width: 0 0.2em 0.2em 0;
+	-webkit-transform: rotate(45deg);
+	-ms-transform: rotate(45deg);
+	transform: rotate(45deg);
+}
+
+.config-group {
+	margin-top: 1em;
+	border: 1px solid var(--input-group-border);
+	padding: 2em;
+	width: fit-content;
+}
+
+.config-group h1 {
+	margin-top: 0;
+	margin-bottom: 0.5em;
+}
+
+/* Footer */
+input[type=button].button-save {
+	position: fixed;
+	border-radius: 0;
+	bottom: 0;
+	right: 0;
+	width: 15em;
+	height: 4em;
+}
+
+/* Modal */
+.modal {
+	display: none;
+	position: fixed;
+	z-index: 1;
+	padding-top: 100px;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 100%;
+	overflow: auto;
+	background-color: rgba(0,0,0,0.4);
+}
+
+.modal-window {
+	background-color: var(--menu-bg-colour);
+	margin: auto;
+	padding: 20px;
+	border: 1px solid var(--input-bg-highlight);
+	border-left: 5px solid var(--modal-side-border);
+	width: fit-content;
+	width: -moz-fit-content;
+}
+
+.modal-window * {
+	margin-top: 0;
+	margin-bottom: 0;
+}
+
+.modal-window input[type=button] {
+	border-radius: 0;
+	height: 2em;
+}
+
+.modal-button-container {
+	display: flex;
+	justify-content: flex-end;
+}
+
+/* Notification Message */
+.message-window {
+	display: none;
+	position: fixed;
+	left: 75%;
+	top: 1em;
+	z-index: 2;
+	text-align: center;
+	font-size: 16px;
+	background-color: var(--menu-bg-colour);
+	margin: auto;
+	border: 1px solid var(--input-bg-highlight);
+	border-bottom: 3px solid red;
+	width: 20%;
+}
