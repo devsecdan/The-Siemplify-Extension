@@ -25,7 +25,7 @@ Allows the user to configure shortcuts to close a case with a pre-defined Reason
 **Context Actions**
 Configure contextual actions, which can be accessed by right-clicking any entity or text element on a page. Actions are templated links which can be used to perform actions such as VirusTotal lookups on entities or pass entity data to a query service.
 
-**Detect Last Alert**
+**Environment Monitoring**
 A monitoring module which can be used detect and alert when no cases have been observed from a given environment within a certain time threshold.
 
 **Entity Enrichment**
@@ -37,7 +37,7 @@ Automatically expand accordions.
 **Hide Recommendations**
 Hide the recommendations accordion from cases.
 
-**Insert CSS**
+**CSS Style**
 Make a number of style changes, including changing case highlight colour, adding alternating table colours, enhancing the way tables resize, and enabling wrapping of table and entity text.
 
 **Quick Copy**
@@ -85,10 +85,11 @@ The majority of the extension modules should now function on your configured SOA
 Tested on recent versions of Chrome and Firefox. Other Chromium-based browsers will likely function, as well.
 
 ### Siemplify
-Extension should work for Siemplify version v5.5.x.
-Tested on Siemplify v5.5.1.
+Extension should work for Siemplify version v5.5.3. and onwards.
+Tested on Siemplify v5.5.3.
 
 ## Third Party Libraries
 - [Mutation Summary](https://github.com/rafaelw/mutation-summary)
-- [Mousetraps](https://github.com/ShiroLon/mousetraps)
+- [Mousetraps](https://github.com/devsecdan/mousetraps)
 - [Zlib](https://github.com/imaya/zlib.js)
+- [saferInnerHTML](https://github.com/cferdinandi/saferInnerHTML)

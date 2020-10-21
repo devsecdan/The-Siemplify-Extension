@@ -195,14 +195,14 @@ var ModuleManager = (function () {
         .catch(async () => { // Execute scripts if no response received.
             injecting = true;
             try {
-                await browser.tabs.executeScript(tabId, {file: "/core/global/browser-polyfill.min.js"});
+                await browser.tabs.executeScript(tabId, {file: "/lib/browser-polyfill.min.js"});
                 await browser.tabs.executeScript(tabId, {file: "/core/global/siemplify-endpoints.js"});
                 await browser.tabs.executeScript(tabId, {file: "/core/global/configuration-manager.js"});
                 await browser.tabs.executeScript(tabId, {file: "/core/content/base-module.js"});
-                await browser.tabs.executeScript(tabId, {file: "/core/content/mousetraps.js"});
-                await browser.tabs.executeScript(tabId, {file: "/core/content/mousetraps-global-bind.js"});
+                await browser.tabs.executeScript(tabId, {file: "/lib/mousetraps.js"});
+                await browser.tabs.executeScript(tabId, {file: "/lib/mousetraps-global-bind.js"});
                 await browser.tabs.executeScript(tabId, {file: "/core/content/siemplify-api.js"});
-                await browser.tabs.executeScript(tabId, {file: "/dom/mutation-summary.js"});
+                await browser.tabs.executeScript(tabId, {file: "/lib/mutation-summary.js"});
                 await browser.tabs.executeScript(tabId, {file: "/dom/element-observer.js"});
                 await browser.tabs.executeScript(tabId, {file: "/dom/persistent-observer.js"});
                 await browser.tabs.executeScript(tabId, {file: "/helpers/case-list-helper.js"});

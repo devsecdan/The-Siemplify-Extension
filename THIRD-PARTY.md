@@ -2,6 +2,9 @@
 ## Zlib
 [Github](https://github.com/imaya/zlib.js)
 
+## saferInnerHTML
+[Github](https://github.com/cferdinandi/saferInnerHTML)
+
 MIT License
 
 Copyright (c) [year] [fullname]
@@ -28,7 +31,7 @@ SOFTWARE.
 [Github](https://github.com/rafaelw/mutation-summary)
 
 ## mousetraps
-[Github](https://github.com/ShiroLon/mousetraps)
+[Github](https://github.com/devsecdan/mousetraps)
 
                      Apache License
                         Version 2.0, January 2004

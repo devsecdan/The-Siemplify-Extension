@@ -9,8 +9,8 @@
 	let activeElement = document.activeElement;
 	if (selection?.anchorNode?.nodeType === 3) { // Text node
 		// Pick activeElement content if selection is not from the currently active element
-		if (activeElement.nodeName !== "BODY" && activeElement.nodeName !== "IFRAME" && activeElement.innerText !== selection.anchorNode.data) {
-			text = selection.innerText;
+		if (activeElement.nodeName !== "BODY" && activeElement.nodeName !== "IFRAME" && !activeElement.textContent.includes(selection.anchorNode.data)) {
+			text = selection.innerText; // Use innerText instead of textContent, as that applies text styling
 		}
 		else {
 			if (selection.type === "Range") {

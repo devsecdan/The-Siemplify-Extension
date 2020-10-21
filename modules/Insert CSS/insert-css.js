@@ -6,6 +6,7 @@ var InsertCSS = (function () {
     var tableResizeCSS = () => { return ".detail-table table col:first-child {    width: 200px;}.detail-table table col:last-child {    width: 100% !important;}" } 
     var tableRowHighlightCSS = (highlightColour) => { return `.detail-table table tr.ng-star-inserted:nth-child(odd) { background-color: ${highlightColour} !important }`}
     var wrapTextCSS = () => { return "smp-accordion .u-ellipsis { white-space: normal !important; word-wrap: break-word !important; } .summary-container .item-name { white-space: normal !important; word-wrap: break-word !important; }" }
+    var lowercaseEntitiesCSS = () => { return "entity-visualizer .label { text-transform: lowercase; }" };
 	
 	var enable = function () {
         if (this.config.selectionHighlightEnabled) {
@@ -20,6 +21,9 @@ var InsertCSS = (function () {
         if (this.config.wrapTextEnabled) {
             insertCSS("wrapText", wrapTextCSS());
         }
+        if (this.config.lowercaseEntitiesEnabled) {
+            insertCSS("lowercaseEntities", lowercaseEntitiesCSS());
+        }
 	};
 
 	var disable = function() {
@@ -27,6 +31,7 @@ var InsertCSS = (function () {
         removeCSS("tableResize");
         removeCSS("tableRowHighlight");
         removeCSS("wrapText");
+        removeCSS("lowercaseEntities");
     };
 
     var configChanged = function(oldConfig, newConfig) {
@@ -59,4 +64,4 @@ var InsertCSS = (function () {
 	
 }());
 
-BaseModule.initModule(InsertCSS, "Insert CSS");
+BaseModule.initModule(InsertCSS, "CSS Style");

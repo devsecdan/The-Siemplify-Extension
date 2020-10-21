@@ -3,7 +3,7 @@
 class InsertCSS extends BackgroundModule {
     
     static metadata = {
-        name: "Insert CSS",
+        name: "CSS Style",
         category: "Style",
         description: "Insert custom CSS to change page style.",
         configHtmlFile: "Insert CSS/config.part.html",
@@ -13,7 +13,8 @@ class InsertCSS extends BackgroundModule {
             tableRowHighlightEnabled: true,
             tableRowHighlightColour: "#000000",
             tableResizeEnabled: true,
-            wrapTextEnabled: true
+            wrapTextEnabled: true,
+            lowercaseEntitiesEnabled: true
         },
         contentScripts: ["Insert CSS/insert-css.js"]
     }
