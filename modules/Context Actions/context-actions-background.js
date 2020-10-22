@@ -2,10 +2,9 @@
 
 class ContextActions extends BackgroundModule {
     
-    menuTree = {};
-    
     constructor(host) {
         super(host, ContextActions.metadata.name);
+        this.menuTree = {};
     }
 
     enable() {
