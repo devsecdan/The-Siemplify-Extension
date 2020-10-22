@@ -13,7 +13,6 @@
 		"300": "icons/SiemplifyExtension300.png"
 	},
 	"permissions": [
-		"activeTab",
 		"tabs",
 		"storage",
 		"alarms",
