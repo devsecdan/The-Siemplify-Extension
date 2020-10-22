@@ -3,19 +3,6 @@
 class ContextActions extends BackgroundModule {
     
     menuTree = {};
-
-    static metadata = {
-        name: "Context Actions",
-        category: "Functionality",
-        description: "Add customisable contextual actions.",
-        configHtmlFile: "Context Actions/config.part.html",
-        manualPage: "Context Actions/manual.html",
-        defaultConfig: {
-            match: "",
-            case: "None",
-			contextActions: []
-		},
-    }
     
     constructor(host) {
         super(host, ContextActions.metadata.name);
@@ -234,6 +221,19 @@ class ContextActions extends BackgroundModule {
         browser.tabs.create({url: url.toString()});
     }
 
+}
+
+ContextActions.metadata = {
+    name: "Context Actions",
+    category: "Functionality",
+    description: "Add customisable contextual actions.",
+    configHtmlFile: "Context Actions/config.part.html",
+    manualPage: "Context Actions/manual.html",
+    defaultConfig: {
+        match: "",
+        case: "None",
+        contextActions: []
+    },
 }
 
 ModuleManager.registerModule(ContextActions);

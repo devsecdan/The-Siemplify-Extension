@@ -1,20 +1,7 @@
 "use strict";
 
 class DetectLastAlert extends BackgroundModule {
-	
-	static metadata = {
-		name: "Environment Monitoring",
-		category: "Monitoring",
-		description: "Monitor last seen case from each environment and alert if an environment hasn't produced a case within a given threshold.",
-		configHtmlFile: "Detect Last Alert/config.part.html",
-		defaultConfig: {
-			recheckRate: 60
-		},
-		contentScripts: ["Detect Last Alert/detect-last-alert.js"]
-	}
-
-	
-	
+		
 	constructor(host) {
 		super(host, DetectLastAlert.metadata.name);
 		
@@ -175,6 +162,17 @@ class DetectLastAlert extends BackgroundModule {
 		}
 		return false;
 	}
+}
+
+DetectLastAlert.metadata = {
+	name: "Environment Monitoring",
+	category: "Monitoring",
+	description: "Monitor last seen case from each environment and alert if an environment hasn't produced a case within a given threshold.",
+	configHtmlFile: "Detect Last Alert/config.part.html",
+	defaultConfig: {
+		recheckRate: 60
+	},
+	contentScripts: ["Detect Last Alert/detect-last-alert.js"]
 }
 
 ModuleManager.registerModule(DetectLastAlert);
