@@ -17,8 +17,7 @@
 		"storage",
 		"alarms",
 		"contextMenus",
-		"webRequest",
-		"webRequestBlocking"
+		"webRequest"
 	],
 	"optional_permissions": [
 		"http://*/*",
