@@ -47,6 +47,13 @@ Allows a user to easily copy certain information by simply clicking it.
 Alphabetically sort tables.
 
 ## Install
+### Permanent Install
+#### Chrome
+[Download From Chrome Webstore](https://chrome.google.com/webstore/detail/the-siemplify-extension/lhjlconlpeljljbadkaihcdhoacclhpk)
+
+#### Firefox
+[Download From addon.mozilla.org](https://addons.mozilla.org/en-GB/firefox/addon/the-siemplify-extension/)
+
 ### Debug / Temporary Install
 #### Chrome
 1. Clone this repository to a folder of your choice.
@@ -60,9 +67,6 @@ Alphabetically sort tables.
 2. Go to [about:debugging#/runtime/this-firefox](about:debugging#/runtime/this-firefox).
 3. Click `Load Temporary Add-on...`.
 4. Navigate to and select the main repository folder and select the `manifest.json` file.
-
-### Permanent Install
-Coming soon.
 
 ## Setup
 The extension consists of several modules, some of which may require further setup in order to function correctly.
