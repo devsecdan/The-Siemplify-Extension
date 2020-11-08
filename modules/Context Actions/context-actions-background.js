@@ -181,8 +181,8 @@ class ContextActions extends BackgroundModule {
      * @param {*} environment 
      */
     templateReplace(action, selection, environment) {
-        return action.replace("{{SELECTION}}", selection)
-                     .replace("{{ENVIRONMENT}}", environment);
+        return action.replace(/\{\{SELECTION\}\}/g, selection)
+                     .replace(/\{\{ENVIRONMENT\}\}/g, environment);
     }
 
     /**
