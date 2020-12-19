@@ -2,6 +2,8 @@
 
 var TableSort = (function () {
 
+	var alertButton = ".alert-option-menu";
+
 	var enable = function () {
 		ElementObserver.observe("#nameHeaderAutomation.u-ellipsis.ui-sortable-column.ui-resizable-column", sortTables);
 	};
@@ -11,16 +13,22 @@ var TableSort = (function () {
 	};
 	
 	var sortTables = function (summary) {
-        summary.added.forEach(element => {
-			let stop = 3;
-			while (element.getElementsByClassName("pi-sort-up").length === 0) {
-				element.click();
-				// Prevent potential infinite loop
-				stop--;
-				if (stop === 0) break;
-			}
-		});
+		if (!alertButtonClicked()) {
+			summary.added.forEach(element => {
+				let stop = 3;
+				while (element.getElementsByClassName("pi-sort-up").length === 0) {
+					element.click();
+					// Prevent potential infinite loop
+					stop--;
+					if (stop === 0) break;
+				}
+			});	
+		}
 	};
+
+	var alertButtonClicked = function() {
+		return document.activeElement.matches(alertButton);
+	}
 	
 	return {
 		enable: enable,

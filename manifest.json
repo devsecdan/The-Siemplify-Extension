@@ -1,8 +1,8 @@
 {
 	"name": "The Siemplify Extension",
 	"short_name": "TSE",
-	"version": "2.0.1.1",
-	"version_name": "v2.0.1.1-s5.5.3",
+	"version": "2.0.1.2",
+	"version_name": "v2.0.1.2-s5.5.3",
 	"description": "Extend Siemplify with a wealth of additional features and improvements.",
 	"author": "Daniel Brand",
 	"homepage_url": "https://github.com/devsecdan/The-Siemplify-Extension",
