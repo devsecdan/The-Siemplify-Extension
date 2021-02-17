@@ -160,7 +160,7 @@ var CasesNavigation = (function () {
 	}
 	
 	// ======================== CASE EVENTS ========================
-	var eventsTableSelector = ".entity-table .ui-table-tbody";
+	var eventsTableSelector = ".tab-panel-events .ui-table-scrollable-body .ui-table-tbody";
 	var selectedEventSelector = ".ui-state-highlight";
 
 	var selectEvent = function(relativeIndex) {
