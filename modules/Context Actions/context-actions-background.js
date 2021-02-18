@@ -190,8 +190,9 @@ class ContextActions extends BackgroundModule {
      * @param {*} environment 
      */
     processEnvironment(environment) {
-        let match = this.config.match;
-        let result = environment.match(match)[1] || environment;
+        let regex = this.config.match;
+        let match = environment.match(regex);
+        let result = (match) ? match[1] : environment;
         switch(this.config.case) {
             case "toLower":
                 result = result.toLowerCase();
