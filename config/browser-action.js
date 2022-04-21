@@ -1,24 +1,46 @@
+function extractDomain(url) {
+    return url.replace("http://","").replace("https://","").split(/[/?#]/)[0];
+}
 
-browser.browserAction.onClicked.addListener(activeTab => {
-    openOptions(browser.extension.getURL("config/config.html"));
+async function setTabIcon(tabId, url) {
+    let hosts = await ConfigurationManager.getHosts();
+    let domain = extractDomain(url);
+    if (hosts.includes(domain)) {
+        browser.browserAction.setIcon({
+            path: {
+                "48": "icons/SiemplifyExtension48.png",
+                "96": "icons/SiemplifyExtension96.png",
+                "300": "icons/SiemplifyExtension300.png"
+            },
+            tabId: tabId
+        });
+    }
+    else {
+        browser.browserAction.setIcon({
+            path: {
+                "48": "icons/SiemplifyExtension-grey48.png",
+                "96": "icons/SiemplifyExtension-grey96.png",
+                "300": "icons/SiemplifyExtension-grey300.png"
+            },
+            tabId: tabId
+        });
+    }
+}
+
+browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+    if (changeInfo.status == "complete" && tab.url) {
+        setTabIcon(tabId, tab.url);
+    }
 });
-
-async function getOwnTabs() {
-    let views = await browser.extension.getViews({type: 'tab'});
-    let tabs = [];
-    for (let view of views) {
-        let tab = await view.browser.tabs.getCurrent();
-        tabs.push(tab);
+browser.tabs.onCreated.addListener(tab => {
+    if (tab.url) {
+        setTabIcon(tab.id, tab.url);
     }
-    return tabs;
-}
-    
-async function openOptions(url) {
-    const ownTabs = await getOwnTabs();
-    const tab = ownTabs.find(tab => tab.url.includes(url));
-    if (tab) {
-        browser.tabs.update(tab.id, {active: true});
-    } else {
-        browser.tabs.create({url});
-    }
-}
+});
+browser.tabs.onActivated.addListener(activeInfo => {
+    browser.tabs.get(activeInfo.tabId).then(tab => {
+        if (tab.url) {
+            setTabIcon(tab.id, tab.url);
+        }
+    })
+})

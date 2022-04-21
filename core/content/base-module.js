@@ -1,7 +1,7 @@
 "use strict";
 
 // Respond to check if base modules/files are running
-browser.runtime.onMessage.addListener((request, sender, response) => {
+MessagingManager.addListener("baseModulesRunning", (request) => {
 	if (request?.basemodules === "running") {
 		return true;
 	}
@@ -33,6 +33,7 @@ var Module = (function() {
 */
 
 var BaseModule = (function () {
+
 	/**
 	 * Initial module setup.
 	 * @param {*} module Module object
@@ -40,8 +41,11 @@ var BaseModule = (function () {
 	 */
 	var initModule = async function(module, moduleName) {
 		
+		let generalConfig = await ConfigurationManager.getHostConfig(location.hostname, "general");
+		let siemplifyVersion = generalConfig.siemplifyVersion;
+
 		// Fetch module config
-		module.config = await ConfigurationManager.getFinalConfig(location.hostname, moduleName);
+		module.config = await ConfigurationManager.getFinalConfig(location.hostname, siemplifyVersion, moduleName);
 
 		// Enable module if needed
 		if (module.config.enabled) {
@@ -49,7 +53,7 @@ var BaseModule = (function () {
 		}
 		
 		// Respond to checks to see if module is alive
-		browser.runtime.onMessage.addListener((request, sender, response) => {
+		MessagingManager.addListener(moduleName, (request) => {
 			if (request?.modulename === moduleName) {
 				return true;
 			}
@@ -59,11 +63,11 @@ var BaseModule = (function () {
 		 * Notify module of changes to config values
 		 */
 		browser.storage.onChanged.addListener(async (changes, areaName) => {
-			let newConfig = await ConfigurationManager.getFinalConfig(location.hostname, moduleName);
+			let newConfig = await ConfigurationManager.getFinalConfig(location.hostname, siemplifyVersion, moduleName);
 			let oldConfig = module.config;
 			module.config = newConfig;
 			// Notify module of config change
-			if (oldConfig.enabled && module.configChanged) {
+			if (oldConfig.enabled && newConfig.enabled && module.configChanged) {
 				module.configChanged.call(module, oldConfig, newConfig);	
 			}
 

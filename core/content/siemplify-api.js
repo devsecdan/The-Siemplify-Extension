@@ -8,7 +8,7 @@ var SiemplifyApi = (function () {
 	var _token;
 	var _username;
 
-	browser.runtime.onMessage.addListener((request, sender, response) => {
+	MessagingManager.addListener("authenticationToken", (request) => {
         if (request?.authenticationToken) {
             updateAuthentication(request.authenticationToken);
         }
@@ -50,8 +50,8 @@ var SiemplifyApi = (function () {
 			return Promise.resolve(_username);
 		}
 		else {
-			document.querySelector("smp-action[tnautomationid=profileButton]")?.click();
-			let fullname = document.querySelector("div.info > div.name, div.user-box__info--name")?.textContent.trim();
+			document.querySelector("tn-user-avatar")?.click();
+			let fullname = document.querySelector("tn-user-card div.name")?.textContent.trim();
 			let lastname = fullname.split(" ").pop();
 			let request = new GetUserProfiles(lastname, 50);
 			let promise = new Promise((resolve, reject) => {
@@ -98,7 +98,7 @@ var SiemplifyApi = (function () {
 			return _token;
 		}
 		else {
-			_token = await browser.runtime.sendMessage({"getAuthenticationToken": true})
+			_token = await MessagingManager.sendMessage("getAuthenticationToken", {"getAuthenticationToken": true})
 			return _token;
 		}
 	}
@@ -123,7 +123,7 @@ var SiemplifyApi = (function () {
 				this.setRequestHeader("Authorization", requestToken);
 				// Clear token if 401 is returned to prompt token renewal
 				this.addEventListener("load", (request) => {
-					if (request.status == 401) {
+					if (request.target.status == 401) {
 						_token = "";
 					}
 				})
@@ -157,7 +157,7 @@ var SiemplifyApi = (function () {
 				"environments": [],
 				"importance": [],
 				"incident": [],
-				//"isCaseClosed":false,
+				"isCaseClosed": null,
 				"ports": [],
 				"priorities": [],
 				"products": [],
@@ -169,6 +169,7 @@ var SiemplifyApi = (function () {
 				"startTime": startTime,
 				"status": [],
 				"tags": [],
+				"timeRangeFilter": 0,
 				"title": ""
 			};
 			
@@ -255,6 +256,122 @@ var SiemplifyApi = (function () {
 		}
 	}
 
+	/**
+	 * Get Playbooks
+	 */
+	class GetPlaybooks extends SiemplifyRequest {
+		constructor() {
+			let payload = [0,1];
+			super("POST", API_BASE_URL+SiemplifyEndpoints.API_GET_WORKFLOW_MENU_CARDS, payload);
+		}
+	}
+
+	/**
+	 * Get Playbook Data
+	 */
+	class GetPlaybookData extends SiemplifyRequest {
+		constructor(identifier) {
+			super("GET", API_BASE_URL+SiemplifyEndpoints.API_GET_WORKFLOW_FULL_INFO_BY_IDENTIFIER+identifier);
+		}
+	}
+
+	/**
+	 * Save Playbook
+	 */
+	class SavePlaybook extends SiemplifyRequest {
+		constructor(playbook) {
+			super("POST", API_BASE_URL+SiemplifyEndpoints.API_SAVE_WORKFLOW_DEFINITIONS, playbook);
+		}
+	}
+
+	/**
+	 * Get Playbooks Using Blocks
+	 */
+	 class SavePlaybookVersion extends SiemplifyRequest {
+		constructor(playbookIdentifier, comment="") {
+			let payload = {
+				"identifier": playbookIdentifier,
+				"comment": comment
+			}
+			super("POST", API_BASE_URL+SiemplifyEndpoints.API_SAVE_LOG_VERSION_OF_WORKFLOW_DEFINITIONS, payload);
+		}
+	}
+
+	/**
+	 * Get Playbooks Using Blocks
+	 */
+	class GetPlaybooksUsingBlocks extends SiemplifyRequest {
+		constructor(blocks) {
+			let payload = {
+				blockIdentifiers: blocks
+			}
+			super("POST", API_BASE_URL+SiemplifyEndpoints.API_GET_PLAYBOOKS_USING_BLOCKS, payload);
+		}
+	}
+
+	/**
+	 * Get Playbooks Using Blocks
+	 */
+	class GetCaseFullDetails extends SiemplifyRequest {
+		constructor(caseId) {
+			super("GET", API_BASE_URL+SiemplifyEndpoints.API_GET_CASE_FULL_DETAILS+caseId);
+		}
+	}
+
+	/**
+	 * Save Simulation Data As Simulated Case
+	 */
+	class SaveSimulatedCase extends SiemplifyRequest {
+		constructor(simulationData) {
+			super("POST", API_BASE_URL+SiemplifyEndpoints.API_CREATE_SIMULATED_CUSTOM_CASE, simulationData);
+		}
+	}
+
+	/**
+	 * Import .case file json
+	 */
+	class ImportSimulatedCase extends SiemplifyRequest {
+		constructor(simulationData) {
+			super("POST", API_BASE_URL+SiemplifyEndpoints.API_IMPORT_CUSTOM_CASE, simulationData);
+		}
+	}
+
+	/**
+	 * Get connectors data
+	 */
+	class GetConnectorsData extends SiemplifyRequest {
+		constructor() {
+			super("GET", API_BASE_URL+SiemplifyEndpoints.API_GET_CONNECTORS_DATA);
+		}
+	}
+
+	/**
+	 * Save local usecase
+	 */
+	class AddOrUpdateLocalUsecase extends SiemplifyRequest {
+		constructor(payload) {
+			super("POST", API_BASE_URL+SiemplifyEndpoints.API_ADD_OR_UPDATE_LOCAL_USECASE, payload);
+		}
+	}
+
+	/**
+	 * Export Usecase
+	 */
+	class ExportUsecase extends SiemplifyRequest {
+		constructor(payload) {
+			super("POST", API_BASE_URL+SiemplifyEndpoints.API_EXPORT_USECASE, payload);
+		}
+	}
+
+	/**
+	 * Get Siemplify system versionn
+	 */
+	class GetSystemVersion extends SiemplifyRequest {
+		constructor() {
+			super("GET", API_BASE_URL+SiemplifyEndpoints.API_GET_SYSTEM_VERSION);
+		}
+	}
+	
 
 	return {
 		BASE_URL: BASE_URL,
@@ -265,7 +382,19 @@ var SiemplifyApi = (function () {
 		ExecuteBulkAssignRequest: ExecuteBulkAssignRequest,
 		GetEntityDataRequest: GetEntityDataRequest,
 		GetUserProfiles: GetUserProfiles,
-		GetCaseCardsByRequestRequest: GetCaseCardsByRequestRequest
+		GetCaseCardsByRequestRequest: GetCaseCardsByRequestRequest,
+		GetPlaybooks: GetPlaybooks,
+		GetPlaybookData: GetPlaybookData,
+		SavePlaybook: SavePlaybook,
+		SavePlaybookVersion: SavePlaybookVersion,
+		GetPlaybooksUsingBlocks: GetPlaybooksUsingBlocks,
+		GetCaseFullDetails: GetCaseFullDetails,
+		SaveSimulatedCase: SaveSimulatedCase,
+		ImportSimulatedCase: ImportSimulatedCase,
+		GetConnectorsData: GetConnectorsData,
+		AddOrUpdateLocalUsecase: AddOrUpdateLocalUsecase,
+		ExportUsecase: ExportUsecase,
+		GetSystemVersion: GetSystemVersion
 	};
 	
 }());

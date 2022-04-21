@@ -470,3 +470,19 @@ input[type=button].button-save {
 	border-bottom: 3px solid red;
 	width: 20%;
 }
+
+/* Popup */
+div.popup {
+	width: 100%;
+	padding: 2em;
+	text-align: center;
+}
+
+input.popup {
+	width: 200px;
+	height: 2.5em;
+	margin-top: 1em;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}

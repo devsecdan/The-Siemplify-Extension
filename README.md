@@ -96,4 +96,3 @@ Tested on Siemplify v5.5.3.
 - [Mutation Summary](https://github.com/rafaelw/mutation-summary)
 - [Mousetraps](https://github.com/devsecdan/mousetraps)
 - [Zlib](https://github.com/imaya/zlib.js)
-- [saferInnerHTML](https://github.com/cferdinandi/saferInnerHTML)

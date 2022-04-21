@@ -2,9 +2,6 @@
 ## Zlib
 [Github](https://github.com/imaya/zlib.js)
 
-## saferInnerHTML
-[Github](https://github.com/cferdinandi/saferInnerHTML)
-
 MIT License
 
 Copyright (c) [year] [fullname]

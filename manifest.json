@@ -1,8 +1,7 @@
 {
 	"name": "The Siemplify Extension",
 	"short_name": "TSE",
-	"version": "2.0.1.4",
-	"version_name": "v2.0.1.4-s5.5.3",
+	"version": "3.2",
 	"description": "Extend Siemplify with a wealth of additional features and improvements.",
 	"author": "Daniel Brand",
 	"homepage_url": "https://github.com/devsecdan/The-Siemplify-Extension",
@@ -20,12 +19,18 @@
 		"webRequest"
 	],
 	"optional_permissions": [
-		"http://*/*",
 		"https://*/*"
 	],
 	"background": {
 		"page": "background.html",
 		"persistent": true
 	},
-	"browser_action": {}
+	"browser_action": {
+		"default_popup": "config/popup.html",
+		"default_icon": {
+			"48": "icons/SiemplifyExtension-grey48.png",
+			"96": "icons/SiemplifyExtension-grey96.png",
+			"300": "icons/SiemplifyExtension-grey300.png"
+		}
+	}
 }

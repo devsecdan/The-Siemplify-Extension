@@ -12,7 +12,8 @@ var ConfigurationManager = (function () {
         let hosts = [];
         for (let [key, value] of Object.entries(storage)) {
             let host = key.split("_")[0];
-            if (host != "global" && !hosts.includes(host)) {
+            let module = key.split("_")[1];
+            if (module == "general" && host != "global" && !hosts.includes(host)) {
                 hosts.push(host);
             }
         }
@@ -25,14 +26,14 @@ var ConfigurationManager = (function () {
      * Add new host to hosts array
      * @param {*} host 
      */
-    var addHost = async function(host) {
+    var addHost = async function(host, version) {
         let hosts = await getHosts();
         if (hosts.includes(host)) {
             return false;
         }
         else {
             try {
-                await browser.storage.local.set({ [`${host}_general`]: {} });
+                await browser.storage.local.set({ [`${host}_general`]: {"siemplifyVersion": version} });
                 return true;
             }
             catch(e) {
@@ -58,17 +59,18 @@ var ConfigurationManager = (function () {
      * Equivalent to getHostConfig("global", module)
      * @param {*} module Specific global config entry to get.
      */
-    var getGlobalConfig = async function(module) {
-        return await getHostConfig("global", module);
+    var getGlobalConfig = async function(module, version) {
+        return await getHostConfig(`global_${version}`, module);
     }
 
     /**
      * Equivalent to setHostConfig("global", module, value)
      * @param {*} key key inside global configuration to set
+     * @param {*} version
      * @param {*} value
      */
-    var setGlobalConfig = async function(module, value) {
-        return await setHostConfig("global", module, value);
+    var setGlobalConfig = async function(module, version, value) {
+        return await setHostConfig(`global_${version}`, module, value);
     }
 
     /**
@@ -97,6 +99,7 @@ var ConfigurationManager = (function () {
     var setHostConfig = async function(host, module, value) {
         try {
             await browser.storage.local.set({[`${host}_${module}`]: value});
+            console.log(`${host}_${module}`, value);
             return true;
         }
         catch(e) {
@@ -122,10 +125,18 @@ var ConfigurationManager = (function () {
     /**
      * Get the combined host and global config, with host config taking precedence over global config
      * @param {*} host 
+     * @param {*} version
      * @param {*} module 
      */
-    var getFinalConfig = async function(host, module) {
-        let globalConfig = await getGlobalConfig(module);
+    var getFinalConfig = async function(host, version, module) {
+        let globalConfig = {};
+        let versionParts = version.split(".");
+        while (versionParts.length > 0) {
+            let versionLevel = versionParts.join('.');
+            let globalConfigAtVersionLevel = await getGlobalConfig(module, versionLevel);
+            globalConfig = Object.assign(globalConfigAtVersionLevel, globalConfig);
+            versionParts.pop();
+        }
         let hostConfig = await getHostConfig(host, module);
         return Object.assign(globalConfig, hostConfig);
     }

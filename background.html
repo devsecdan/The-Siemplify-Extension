@@ -6,25 +6,16 @@
     </head>
     <body>
         <script src="lib/zlib_and_gzip.min.js"></script>
-        <script src="lib/browser-polyfill.min.js"></script>
+        <script src="lib/browser-polyfill.js"></script>
         <script src="core/global/configuration-manager.js"></script>
         <script src="core/global/siemplify-endpoints.js"></script>
-        <script src="core/background/background-module.js"></script>
-        <script src="core/background/authentication-manager.js"></script>
-        <script src="core/background/module-manager.js"></script>
-        <script src="modules/Detect Last Alert/detect-last-alert-background.js"></script>
-        <script src="modules/Case ID Search/case-id-search-background.js"></script>
-        <script src="modules/Assign New Cases/assign-new-cases-background.js"></script>
-        <script src="modules/Auto-Select Next Case/auto-select-next-case-background.js"></script>
-        <script src="modules/Cases Navigation/cases-navigation-background.js"></script>
-        <script src="modules/Close Case/close-case-background.js"></script>
-        <script src="modules/Context Actions/context-actions-background.js"></script>
-        <script src="modules/Quick Copy/quick-copy-background.js"></script>
-        <script src="modules/Entity Enrichment/entity-enrichment-background.js"></script>
-        <script src="modules/Hide Recommendations/hide-recommendations-background.js"></script>
-        <script src="modules/Insert CSS/insert-css-background.js"></script>
-        <script src="modules/Expand Accordion/expand-accordion-background.js"></script>
-        <script src="modules/Table Sort/table-sort-background.js"></script>
-        <script src="config/browser-action.js"></script>
+        <script type="module" src="migration/migration.js"></script>
+        <script type="module" src="core/background/background-module.js"></script>
+        <script type="module" src="core/background/authentication-manager.js"></script>
+        <script type="module" src="core/background/module-manager.js"></script>
+        <script type="module" src="modules/5/import-modules.js"></script>
+        <script type="module" src="modules/5.6/import-modules.js"></script>
+        <script type="module" src="modules/6/import-modules.js"></script>
+        <script type="module" src="config/browser-action.js"></script>
     </body>
 </html>

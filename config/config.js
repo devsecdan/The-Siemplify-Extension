@@ -14,79 +14,153 @@
  */
 
 var _modulesMetadata = {};
+var version = 0;
 
 /**
  * Set up configuration page
  * @param {*} modulesMetadata Metadata of all modules
  */
-async function initialise(modulesMetadata) {
+async function initialise() {
 	
 	//Set version number in page title
 	document.querySelector("#title").textContent += ` ${browser.runtime.getManifest().version}`
 
 	// Get metadata and hosts
-	_modulesMetadata = modulesMetadata;
 	let hosts = await ConfigurationManager.getHosts();
-	let section = determineHostSection(hosts);
+	let sectionParam = determineHostSection(hosts);
+	let allSupportedVersions = await MessagingManager.sendMessage("getSiemplifyVersions", {"getSiemplifyVersions": true});
+	let versionParam = determineVersion(allSupportedVersions);
 
 	// Build config page
 	let container = document.getElementById("main-container");
-	setPageTitle(section, hosts, container);
+	setPageTitle(sectionParam, hosts, container);
 
 	// Initialise side menu
-	initialiseMenu(hosts, section);
+	initialiseMenu(hosts, sectionParam, allSupportedVersions);
 	
-	// Create host-specific general config options
-	await createGeneralConfig(section);
+	// Create general config options
+	if (sectionParam) {
+		let generalConfig = await ConfigurationManager.getHostConfig(sectionParam, "general");
+		version = versionParam || generalConfig.siemplifyVersion;
+		await createHostGeneralConfig(sectionParam, version, allSupportedVersions, generalConfig.apiPort, generalConfig.username);
+	}
+	else {
+		version = versionParam || allSupportedVersions[0];
+		await createGlobalGeneralConfig(version, allSupportedVersions);
+	}
 
 	// Create container for the modules
 	let moduleContainer = document.createElement("div");
 	moduleContainer.id = "modules";
 	container.appendChild(moduleContainer);
 
+	// Get module metadata and build module section
+	if (sectionParam) {
+		_modulesMetadata = await MessagingManager.sendMessage("getModuleMetadata", {"getModuleMetadata": true, "version": version});
+	}
+	else {
+		_modulesMetadata = await MessagingManager.sendMessage("getModuleMetadata", {"getModuleMetadata": true, "version": version, specific: true});
+	}
+	
+
 	// Modules
 	for (let moduleMetadata of _modulesMetadata) {
-		await setupModule(section, moduleMetadata);
+		await setupModule(sectionParam, moduleMetadata);
 	};
+
+	// addhost parameter
+	let searchParams = new URLSearchParams(location.search);
+	let addHostParam = searchParams.get("addhost");
+	if (addHostParam) {
+		openAddHostModal(allSupportedVersions, addHostParam);
+	}
 }
 
 /**
- * Creates general config
+ * Creates general config section on host page
  * @param {*} section 
  */
-async function createGeneralConfig(host) {
+async function createHostGeneralConfig(host, version, allSupportedVersions, apiPort, username) {
+	let versionOptions = allSupportedVersions.reduce((fullstring, supportedVersion) => {
+		return fullstring += `<option value="${supportedVersion}" ${supportedVersion==version ? "selected" : ""}>${supportedVersion}</option>\n`
+	}, "");
+	let currentSelectionText = version ? version : "Select Version";
+	versionOptions = `<option hidden disabled value="${currentSelectionText}"${!versionOptions.includes("selected") ? "selected" : ""} value>${currentSelectionText}.x</option>\n` + versionOptions;
 	// Host-specific config options
-	if (host) {
-		let container = document.querySelector("#main-container");
-		let configDiv = document.createElement("div");
-		configDiv.setAttribute("class", "category");
-		configDiv.id = "category-general";
-		saferInnerHTML(configDiv, `
-			<h1>General</h1>
-			<div class="module" id="module-general">
-				<form id="general-form">
-					<table>
-						<tr>
-							<td><label>Explicit API Port</label></td>
-							<td><input type="number" class="config-element" config-name="apiPort"></input></td>
-						</tr>
-						<tr>
-							<td><label>(optional) Username</label></td>
-							<td><input type="text" class="config-element" config-name="username"></input></td>
-						</tr>
-					</table>
-				</form>
-			</div>
-		`);
-		container.appendChild(configDiv);
-		let generalConfig = await ConfigurationManager.getHostConfig(host, "general");
-		if (generalConfig.apiPort) {
-			document.querySelector("input[config-name=apiPort]").value = generalConfig.apiPort;
-		}
-		if (generalConfig.username) {
-			document.querySelector("input[config-name=username]").value = generalConfig.username;
-		}
+	let container = document.querySelector("#main-container");
+	let configDiv = document.createElement("div");
+	configDiv.setAttribute("class", "category");
+	configDiv.id = "category-general";
+	configDiv.insertAdjacentHTML("beforeend", `
+		<h1>General</h1>
+		<div class="module" id="module-general">
+			<form id="general-form">
+				<table>
+					<tr>
+						<td><label>Siemplify Version</label></td>
+						<td><select class="config-element" config-name="siemplifyVersion">
+							${versionOptions}
+						</select></td>
+					</tr>
+					<tr>
+						<td><label>Explicit API Port</label></td>
+						<td><input type="number" class="config-element" config-name="apiPort"></input></td>
+					</tr>
+					<tr>
+						<td><label>(optional) Username</label></td>
+						<td><input type="text" class="config-element" config-name="username"></input></td>
+					</tr>
+				</table>
+			</form>
+		</div>
+	`);
+	container.appendChild(configDiv);
+
+	if (version) {
+		document.querySelector("select[config-name=siemplifyVersion]").value = version;
 	}
+	if (apiPort) {
+		document.querySelector("input[config-name=apiPort]").value = apiPort;
+	}
+	if (username) {
+		document.querySelector("input[config-name=username]").value = username;
+	}
+
+	let versionSelectElement = document.querySelector("select[config-name=siemplifyVersion]");
+	versionSelectElement.addEventListener("change", () => location.search = `version=${versionSelectElement.value}&section=${host}`)
+}
+
+/**
+ * Creates general config section on global page
+ * @param {*} section 
+ */
+async function createGlobalGeneralConfig(version, allSupportedVersions) {
+	let versionOptions = allSupportedVersions.reduce((fullstring, supportedVersion) => {
+		return fullstring += `<option value="${supportedVersion}" ${supportedVersion==version ? "selected" : ""}>${supportedVersion}.x</option>\n`
+	}, "");
+	let container = document.querySelector("#main-container");
+	let configDiv = document.createElement("div");
+	configDiv.setAttribute("class", "category");
+	configDiv.id = "category-general";
+	configDiv.insertAdjacentHTML("beforeend", `
+		<h1>General</h1>
+		<div class="module" id="module-general">
+			<form id="general-form">
+				<table>
+					<tr>
+						<td><label>Siemplify Version</label></td>
+						<td><select class="config-element" config-name="siemplifyVersion">
+							${versionOptions}
+						</select></td>
+					</tr>
+				</table>
+			</form>
+		</div>
+	`);
+	container.appendChild(configDiv);
+	document.querySelector("select[config-name=siemplifyVersion]").value = version;
+	let versionSelectElement = document.querySelector("select[config-name=siemplifyVersion]");
+	versionSelectElement.addEventListener("change", () => location.search = `version=${versionSelectElement.value}`)
 }
 
 /**
@@ -99,12 +173,12 @@ async function setupModule(section, moduleMetadata) {
 	createModuleSection(section, categorySection, moduleMetadata);
 	await insertModuleConfigHtml(moduleMetadata);
 	let hostConfig = await ConfigurationManager.getHostConfig(section, moduleMetadata.name);
-	let globalConfig = await ConfigurationManager.getGlobalConfig(moduleMetadata.name);
+	let globalConfig = await ConfigurationManager.getGlobalConfig(moduleMetadata.name, moduleMetadata.siemplifyVersion);
 	setDefaultValues(moduleMetadata, section, hostConfig, globalConfig);
 }
 
 /**
- * Returns the value of the 'section' URL query parameter. Returns null if a section is not specified.
+ * Returns the value of the 'section' URL query parameter.
  * @param {*} hosts 
  */
 function determineHostSection(hosts) {
@@ -120,6 +194,19 @@ function determineHostSection(hosts) {
 		// Redirect if given host section does not exist
 		location.search = "";
 	}
+}
+
+/**
+ * Returns the value of the 'version' URL query parameter.
+ */
+function determineVersion(allSupportedVersions) {
+	let searchParams = new URLSearchParams(location.search);
+	let version = searchParams.get("version");
+	if (version && !allSupportedVersions.includes(version)) {
+		// Redirect if given version is not supported
+		location.search = "";
+	}
+	return version;
 }
 
 /**
@@ -150,7 +237,7 @@ function getOrCreateCategory(newCategory) {
 		category = document.createElement("div");
 		category.classList.add("category");
 		category.id = `category-${newCategory}`;
-		saferInnerHTML(category, `<h1>${newCategory}</h1>`);
+		category.insertAdjacentHTML("beforeend", `<h1>${newCategory}</h1>`);
 
 		let moduleDiv = document.getElementById("modules");
 		moduleDiv.appendChild(category);
@@ -167,9 +254,9 @@ function createModuleSection(section, categorySection, metadata) {
 	let moduleSection = document.createElement("div");
 	moduleSection.classList.add("module");
 	moduleSection.id = `module-${metadata.name}`;
-	saferInnerHTML(moduleSection, `
+	moduleSection.insertAdjacentHTML("beforeend", `
 		<h2 class="module-title">${metadata.name}</h2>
-		${metadata.manualPage ? `<a title="Open Documentation" href="/modules/${metadata.manualPage}" target="_blank"><svg class="icon icon-book"><use xlink:href="#icon-book"></use></svg></a>` : ""}
+		${metadata.manualPage ? `<a title="Open Documentation" href="/modules/${metadata.siemplifyVersion}/${metadata.manualPage}" target="_blank"><svg class="icon icon-book"><use xlink:href="#icon-book"></use></svg></a>` : ""}
 		${section ?
 		`	<label class="checkbox-container">
 				Override Global Configuration
@@ -199,7 +286,7 @@ function createModuleSection(section, categorySection, metadata) {
  */
 async function insertModuleConfigHtml(moduleMetadata) {
 	if (moduleMetadata?.configHtmlFile) {
-		let configHtml = await readFile("/modules/"+moduleMetadata.configHtmlFile);
+		let configHtml = await readFile(`/modules/${moduleMetadata.siemplifyVersion}/${moduleMetadata.configHtmlFile}`);
 		if (configHtml) {
 			let form = document.getElementById(moduleMetadata.name+"-form");
 			form.insertAdjacentHTML("beforeend", "<br>"+configHtml);
@@ -406,7 +493,7 @@ function recordKeybind(event) {
  * @param {*} hosts 
  * @param {*} section
  */
-function initialiseMenu(hosts, section) {
+function initialiseMenu(hosts, section, allSupportedVersions) {
 	let menu = document.querySelector(".grid-menu");
 	
 	// Default configuration button
@@ -415,7 +502,7 @@ function initialiseMenu(hosts, section) {
 	if (!section) {
 		defaultLink.classList.add("selected");
 	}
-	saferInnerHTML(defaultLink, "<label>Global Configuration</label>");
+	defaultLink.insertAdjacentHTML("beforeend", "<label>Global Configuration</label>");
 	defaultLink.addEventListener("click", () => location.href="?");
 	menu.appendChild(defaultLink);
 
@@ -447,7 +534,7 @@ function initialiseMenu(hosts, section) {
 	let addHostButton = document.createElement("input");
 	addHostButton.type = "button";
 	addHostButton.value = "Add Host";
-	addHostButton.addEventListener("click", openAddHostModal);
+	addHostButton.addEventListener("click", () => openAddHostModal(allSupportedVersions));
 
 	menu.appendChild(addHostButton);
 }
@@ -477,26 +564,33 @@ async function removeHost(host) {
 /**
  * Opens modal to add a new host
  */
-function openAddHostModal() {
+function openAddHostModal(allSupportedVersions, host = "") {
+	let versionOptions = allSupportedVersions.reduce((fullstring, supportedVersion) => {
+		return fullstring += `<option value="${supportedVersion}">${supportedVersion}.x</option>\n`
+	}, "");
 	let options = {
 		title: "Add Host",
-		content: '<label>Siemplify Host Domain:<label><br><input type="url" id="new-host" placeholder="siemplify.com">',
+		content: `<label>Siemplify Host Domain<label><br><input type="url" id="new-host" placeholder="siemplify.com" value=${host}>
+		<br><label>Select Siemplify Version<label><br>
+		<select id="new-host-version">
+			${versionOptions}
+		</select>`,
 		cancel: {
 			value: "Cancel",
 			callback: () => modal.style.display = "none"
 		},
 		submit: {
 			value: "Add Host",
-			callback: () => addNewHost(document.getElementById("new-host").value)
+			callback: () => addNewHost(document.getElementById("new-host").value, document.getElementById("new-host-version").value)
 		}
 	}
 	openModal(options);
 }
 
-async function addNewHost(host) {
+async function addNewHost(host, version) {
 	let domain = host.replace("https://", "").replace("http://", "").split(/[/?#]/)[0];
 	if (await requestHostPermissions([`https://${domain}/*`])) {
-		if (await ConfigurationManager.addHost(domain)){
+		if (await ConfigurationManager.addHost(domain, version)){
 			location.search = `section=${domain}`;
 		}
 		else {
@@ -609,11 +703,17 @@ async function saveSettings() {
 	if (generalForm) {
 		let generalSettings = {};
 		saveConfigElementSettings(generalForm, generalSettings);
-		await ConfigurationManager.setHostConfig(host, "general", generalSettings);
+		if (host) {
+			await ConfigurationManager.setHostConfig(host, "general", generalSettings);
+		}
+		else {
+			await ConfigurationManager.setGlobalConfig("general", version, generalSettings);
+		}
 	}
 	// Save module settings
 	for (let moduleMetadata of _modulesMetadata) {
 		const moduleName = moduleMetadata.name;
+		const siemplifyVersion = moduleMetadata.siemplifyVersion
 		// Only save host-specific settings if override button is checked
 		let override = document.getElementById(`${moduleName}-override`);
 		if (!override || override.checked) {
@@ -632,7 +732,7 @@ async function saveSettings() {
 					await ConfigurationManager.setHostConfig(host, moduleName, moduleSettings);
 				}
 				else {
-					await ConfigurationManager.setGlobalConfig(moduleName, moduleSettings);
+					await ConfigurationManager.setGlobalConfig(moduleName, siemplifyVersion, moduleSettings);
 				}
 			}
 		}
@@ -826,12 +926,13 @@ async function applyImportConfiguration(importConfig) {
 	let hasPermission = await requestHostPermissions(hosts);
 	if (hasPermission) {
 		// Apply imported configuration
+		browser.storage.local.clear();
 		browser.storage.local.set(importConfig);
 		displayMessage("Import successful. Reloading page...", "info");
 		setTimeout(() => location.reload(), 3000);
 	}
 	else {
-		displayMessage("Host permissions must be provided for imported hosts.", "error");
+		displayMessage(`Host permissions must be provided for imported hosts: ${hosts}`, "error");
 	}
 }
 
@@ -864,7 +965,7 @@ function openResetModal() {
 }
 
 function resetToDefaultConfiguration() {
-	browser.runtime.sendMessage({ resetToDefaultConfig: true })
+	MessagingManager.sendMessage("resetToDefaultConfig", { resetToDefaultConfig: true })
 	.then(response => {
 		displayMessage("Configuration reset. Reloading page...", "info");
 		setTimeout(() => location.reload(), 3000);
@@ -873,11 +974,4 @@ function resetToDefaultConfiguration() {
 
 document.getElementById("resetConfig").addEventListener("click", openResetModal);
 
-
-// Get module metadata and build config page
-browser.runtime.sendMessage({getModuleMetadata: true})
-.then(response => {
-	if (response) {
-		initialise(response);
-	}
-});
+initialise()

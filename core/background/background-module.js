@@ -1,11 +1,12 @@
 "use strict"
 
 class BackgroundModule {
-    constructor(host, name) {
+    constructor(host, siemplifyVersion, name) {
         this.host = host;
+        this.siemplifyVersion = siemplifyVersion
         this.name = name;
         // Fetch module config
-        this.config = ConfigurationManager.getFinalConfig(this.host, this.name)
+        this.config = ConfigurationManager.getFinalConfig(this.host, this.siemplifyVersion, this.name)
         .then(config => {
             this.config = config;
             // Enable module if needed
@@ -20,11 +21,11 @@ class BackgroundModule {
      * Notify module of changes to config values
      */
     async _configChanged() {
-        let newConfig = await ConfigurationManager.getFinalConfig(this.host, this.name);
+        let newConfig = await ConfigurationManager.getFinalConfig(this.host, this.siemplifyVersion, this.name);
         let oldConfig = this.config;
         this.config = newConfig;
         // Notify module of config change
-        if (this.configChanged) {
+        if (oldConfig.enabled && newConfig.enabled && this.configChanged) {
             this.configChanged(oldConfig, newConfig);
         }
         
@@ -53,3 +54,5 @@ class BackgroundModule {
     }
 
 }
+
+export default BackgroundModule;

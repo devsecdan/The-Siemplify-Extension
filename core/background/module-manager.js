@@ -1,8 +1,12 @@
 "use strict";
 
+import MessagingManager from "/core/background/messaging-manager.js"
+
 var ModuleManager = (function () {
 
-    var _modulesMetadata = new Map();
+    // Map of all modules (uninitialised), mapped by version
+    var _modules = new Map();
+    // Map of all modules (initialised), mapped by host
     var _hostModules = new Map();
 
     /**
@@ -21,9 +25,12 @@ var ModuleManager = (function () {
      * Create host modules from given moduel class and add to hostmodule list
      * @param {*} module 
      */
-    var initialiseHostModule = function(Module) {
+    var initialiseHostModule = async function(Module) {
         for (let [host, modules] of _hostModules.entries()) {
-            modules.push(new Module(host));
+            let hostSiemplifyVersion = await getHostSiemplifyVersion(host);
+            if (hostSiemplifyVersion == Module.metadata.siemplifyVersion) {
+                modules.push(new Module(host));
+            }
         }
     }
 
@@ -33,13 +40,14 @@ var ModuleManager = (function () {
      */
     var addHost = async function(host) {
         let modules = [];
-            for (let Module of _modulesMetadata.values()) {
-                modules.push(new Module(host));
-            }
+        let hostSiemplifyVersion = await getHostSiemplifyVersion(host);
+        for (let Module of getVersionAppropriateModules(hostSiemplifyVersion).values()) {
+            modules.push(new Module(host));
+        }
         _hostModules.set(host, modules);
         // Search open tabs for new host and inject modules
         let tabs = await browser.tabs.query({url: `https://${host}/*`});
-        tabs.forEach(tab => executeModules(tab.id));
+        tabs.forEach(tab => executeModules(tab.id, host));
     }
 
     /**
@@ -54,6 +62,20 @@ var ModuleManager = (function () {
             }
         }
         modules.delete(host);
+    }
+
+    /**
+     * Get the version of Siemplify registered for given host
+     * @param {*} host 
+     */
+    var getHostSiemplifyVersion = async function(host) {
+        let generalHostConfig = await ConfigurationManager.getHostConfig(host, "general");
+        let hostSiemplifyVersion = generalHostConfig.siemplifyVersion;
+        if (!hostSiemplifyVersion) {
+            hostSiemplifyVersion = getAllSiemplifyVersions()[0];
+            console.log(`Siemplify version not found in config for ${host}. Using ${hostSiemplifyVersion}`)
+        }
+        return hostSiemplifyVersion;
     }
 
     /**
@@ -79,37 +101,68 @@ var ModuleManager = (function () {
      * Register the name and content scripts of a module
      * @param {*} Module
      */
-    var registerModule = function(Module) {
-        if(_modulesMetadata.has(Module.metadata.name)) {
-            console.log(`A module with this name is already registered: ${Module.metadata.name}`);
+    var registerModule = async function(Module) {
+        let versionModules = _modules.get(Module.metadata.siemplifyVersion)
+        if (!versionModules) {
+            versionModules = new Map();
+            _modules.set(Module.metadata.siemplifyVersion, versionModules);
+        }
+        if (versionModules.has(Module.metadata.name)) {
+            console.log(`A module with this name is already registered for version ${Module.metadata.siemplifyVersion}: ${Module.metadata.name}`);
             return false;
         }
-        _modulesMetadata.set(Module.metadata.name, Module);
+        versionModules.set(Module.metadata.name, Module);
 
         setModuleDefaultConfiguration(Module);
-        initialiseHostModule(Module);
+        await initialiseHostModule(Module);
 
         return true;
     }
 
     /**
-     * Initialise a Module for each configured host
-     * @param {*} Module 
+     * Get a list of all Siemplify versions with supporting modules
      */
-    var initialiseHosts = function(Module) {
-        for (let [host, modules] of _hostModules) {
-            modules.push(new Module(host));
+    var getAllSiemplifyVersions = function() {
+        return Array.from(_modules.keys());
+    }
+
+    /**
+     * Get a list of all modules supporting given Siemplify version
+     * @param {*} siemplifyVersion 
+     */
+    var getSpecificVersionModules = function(siemplifyVersion) {
+        return _modules.get(siemplifyVersion) || new Map();
+    }
+
+    var getVersionAppropriateModules = function(siemplifyVersion) {
+        let versionCandidates = [];
+        for (let version of _modules.keys()) {
+            if (siemplifyVersion.startsWith(version)) {
+                versionCandidates.push(version);
+            }
         }
+
+        versionCandidates.sort((a, b) => { return a.length - b.length });
+
+        let versionModules = [];
+
+        for (let versionCandidate of versionCandidates) {
+            versionModules.push(..._modules.get(versionCandidate));
+        }
+
+        return new Map(versionModules);
     }
 
     /**
      * Reset global configuration to default module config
      */
     var resetToDefaultConfiguration = async function() {
-        for (let Module of _modulesMetadata.values()) {
-            let defaultConfig = Object.assign({}, Module.metadata.defaultConfig);
-            defaultConfig.enabled = true;
-            await ConfigurationManager.setGlobalConfig(Module.metadata.name, defaultConfig);
+        for (let version of getAllSiemplifyVersions()) {
+            for (let Module of getSpecificVersionModules(version).values()) {
+                let defaultConfig = Object.assign({}, Module.metadata.defaultConfig);
+                defaultConfig.enabled = true;
+                await ConfigurationManager.setGlobalConfig(Module.metadata.name, Module.metadata.siemplifyVersion, defaultConfig);
+            }
         }
         return Promise.resolve(true);
     }
@@ -117,7 +170,7 @@ var ModuleManager = (function () {
     /**
      * Listen for messages to reset to default configuration
      */
-    browser.runtime.onMessage.addListener((request, sender, response) => {
+    MessagingManager.addGlobalListener("resetToDefaultConfig", (request) => {
         if (request?.resetToDefaultConfig) {
             resetToDefaultConfiguration();
         }
@@ -130,7 +183,8 @@ var ModuleManager = (function () {
     var setModuleDefaultConfiguration = async function(Module) {
         let saveDefaultConfig = false;
         let moduleName = Module.metadata.name;
-        let moduleStorage = await ConfigurationManager.getGlobalConfig(moduleName);
+        let moduleSiemplifyVersion = Module.metadata.siemplifyVersion;
+        let moduleStorage = await ConfigurationManager.getGlobalConfig(moduleName, moduleSiemplifyVersion);
         let defaultConfig = Module.metadata.defaultConfig;
         // Set default config
         if (Object.keys(moduleStorage).length === 0 && defaultConfig) {
@@ -139,7 +193,7 @@ var ModuleManager = (function () {
         }
         else {
             for (let configOption in defaultConfig) {
-                if (!moduleStorage[configOption]) {
+                if (typeof moduleStorage[configOption] === "undefined") {
                     moduleStorage[configOption] = defaultConfig[configOption];
                     saveDefaultConfig = true
                 }
@@ -149,23 +203,34 @@ var ModuleManager = (function () {
         if (typeof moduleStorage.enabled === "undefined") {
             moduleStorage.enabled = true;
             saveDefaultConfig = true
+            console.log(moduleStorage.enabled);
         }
         // Save config
         if (saveDefaultConfig) {
-            await ConfigurationManager.setGlobalConfig(moduleName, moduleStorage);
-            console.log(`Set defaults for ${moduleName}`, moduleStorage);
+            await ConfigurationManager.setGlobalConfig(moduleName, moduleSiemplifyVersion, moduleStorage);
+            console.log(`Set defaults for ${moduleName}:${moduleSiemplifyVersion}`, moduleStorage);
         }
     }
 
     // Listen for requests for module metadata information
-    browser.runtime.onMessage.addListener((request, sender, response) => {
-        if (request?.getModuleMetadata) {
+    MessagingManager.addGlobalListener("getModuleMetadata", (request) => {
+        if (request?.getModuleMetadata && request?.version) {
+            let modules = request?.specific ? getSpecificVersionModules(request.version).values()
+                                            : getVersionAppropriateModules(request.version).values();
             let metadata = [];
-            for (let module of _modulesMetadata.values()) {
+            for (let module of modules) {
                 metadata.push(module.metadata);
             }
             return Promise.resolve(metadata);
         }
+        else {
+            return Promise.resolve([]);
+        }
+    });
+
+    // Listen for requests for supported Siemplify versions
+    MessagingManager.addGlobalListener("getSiemplifyVersions", () => {
+        return Promise.resolve(getAllSiemplifyVersions());
     });
 
     // Listen for URL changes and execute modules if needed
@@ -175,77 +240,86 @@ var ModuleManager = (function () {
                 origins: [tab.url]
             }).catch(() => {});
             if (hasPermission) {
-                executeModules(tabId);
+                executeModules(tabId, _extractDomain(tab.url));
             }
         }
     });
 
-    var injecting = false;
+    var _extractDomain = function(url) {
+        return url.replace("http://","").replace("https://","").split(/[/?#]/)[0];
+    }
+
+    var injecting = new Set();
     /**
      * Execute modules in provided tab ID if not already running
      * @param {*} tabId 
      */
-    var executeModules = function(tabId) {
+    var executeModules = function(tabId, host) {
         // Check if scripts are currently being injected
-        if (injecting) {
+        if (injecting.has(tabId)) {
             return;
         }
         // Check if modules are already running
-        browser.tabs.sendMessage(tabId, {basemodules: "running"})
+        MessagingManager.sendMessage(tabId, "baseModulesRunning", {basemodules: "running"})
         .catch(async () => { // Execute scripts if no response received.
-            injecting = true;
+            injecting.add(tabId);
             try {
-                await browser.tabs.executeScript(tabId, {file: "/lib/browser-polyfill.min.js"});
+                await browser.tabs.executeScript(tabId, {file: "/lib/browser-polyfill.js"});
                 await browser.tabs.executeScript(tabId, {file: "/core/global/siemplify-endpoints.js"});
                 await browser.tabs.executeScript(tabId, {file: "/core/global/configuration-manager.js"});
+                await browser.tabs.executeScript(tabId, {file: "/core/content/messaging-manager.js"});
                 await browser.tabs.executeScript(tabId, {file: "/core/content/base-module.js"});
                 await browser.tabs.executeScript(tabId, {file: "/lib/mousetraps.js"});
                 await browser.tabs.executeScript(tabId, {file: "/lib/mousetraps-global-bind.js"});
                 await browser.tabs.executeScript(tabId, {file: "/core/content/siemplify-api.js"});
                 await browser.tabs.executeScript(tabId, {file: "/lib/mutation-summary.js"});
-                await browser.tabs.executeScript(tabId, {file: "/dom/element-observer.js"});
-                await browser.tabs.executeScript(tabId, {file: "/dom/persistent-observer.js"});
-                await browser.tabs.executeScript(tabId, {file: "/helpers/case-list-helper.js"});
-                await browser.tabs.executeScript(tabId, {file: "/helpers/event-helper.js"});
+                await browser.tabs.executeScript(tabId, {file: "/core/content/element-observer.js"});
+                await browser.tabs.executeScript(tabId, {file: "/core/content/persistent-observer.js"});
+                await browser.tabs.executeScript(tabId, {file: "/core/content/case-list-helper.js"});
+                await browser.tabs.executeScript(tabId, {file: "/core/content/event-helper.js"});
+                await browser.tabs.executeScript(tabId, {file: "/core/content/modal-helper.js"});
             }
             catch(error) {
                 console.log(error.message)
             }
 
-            for (let [name, module] of _modulesMetadata) {
+            let siemplifyVersion = await getHostSiemplifyVersion(host);
+            for (let [name, module] of getVersionAppropriateModules(siemplifyVersion)) {
                 if (module.metadata.contentScripts) {
-                    browser.tabs.sendMessage(tabId, {modulename: name})
+                    MessagingManager.sendMessage(tabId, name, {modulename: name})
                     .then((response) => {
                         if (!response) {
                             injectModuleScripts(module, tabId);
                         }
                     })
                     .catch(() => { // Execute scripts if no response received.
-                        injectModuleScripts(module, tabId);
+                        injectModuleScripts(module, siemplifyVersion, tabId);
                     });
                 }
             }
-            injecting = false;
+            injecting.delete(tabId);
         });
     }
 
     function injectModuleScripts(module, tabId) {
         for (let contentScript of module.metadata.contentScripts) {
-            browser.tabs.executeScript(tabId, { file: `/modules/${contentScript}` })
+            browser.tabs.executeScript(tabId, { file: `/modules/${module.metadata.siemplifyVersion}/${contentScript}` })
                 .catch((error) => console.log(error.message));
         }
     }
-
+    /*
     // Send message to content scripts whenever URL is changed
     browser.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
         if (changeInfo.url) {
-            browser.tabs.sendMessage(tabId, {newUrl: changeInfo.url})
+            MessagingManager.sendMessage(tabId, "newUrl", {newUrl: changeInfo.url})
             .catch(() => {});
         }
     });
-
+    */
     return {
         registerModule: registerModule
     }
 
 })();
+
+export default ModuleManager;

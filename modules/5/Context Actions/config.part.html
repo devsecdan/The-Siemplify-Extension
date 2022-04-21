@@ -1,0 +1,35 @@
+<div class="config-group" config-group-name="contextActions">
+    <label>Environment Pre-Processing:</label>
+    <br>
+    <label>Match <abbr title="A regex expression to select a part of the environment. Use a capture group to define which part to select."><svg class="icon icon-info"><use xlink:href="#icon-info"></use></svg></abbr></label>
+    <input type="text" class="config-element" config-name="match" placeholder="regex">
+    <label>Case</label>
+    <select class="config-element" config-name="case" style="width: fit-content;">
+        <option selected value="None">None</option>
+        <option value="toLower">toLower</option>
+        <option value="toUpper">toUpper</option>
+    </select>
+    <h1>Context Actions</h1>
+    <input type="button" class="config-group-add" value="Add">
+    <template>
+        <label>Path</label>
+        <input type="text" class="config-group-element" config-name="path" placeholder="&Search/&DuckDuckGo" required>
+        <label>Action</label>
+        <input type="text" class="config-group-element" config-name="action" placeholder="https://duckduckgo.com/?q={{SELECTION}}" required>
+        <label>Parameters</label>
+        <input type="text" class="config-group-element" config-name="parameters" placeholder="q, query, search,..." style="width: 10em;">
+        <label>Parameter Encoding</label>
+        <select class="config-group-element" config-name="encoding" style="width: fit-content;">
+            <option selected value="None">None</option>
+            <option value="UrlEncode">URL Encode</option>
+            <option value="Base64">Base64</option>
+            <option value="GzipBase64">Gzip + Base64</option>
+        </select>
+        <label class="checkbox-container">
+            Re-use Tab
+            <input class="config-group-element" type="checkbox" config-name="reuseTab">
+            <span class="checkbox-checkmark"></span>
+        </label>
+        <input type="button" class="config-group-remove" value="Remove">
+    </template>
+</div>

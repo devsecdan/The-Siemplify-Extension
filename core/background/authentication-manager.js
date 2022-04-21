@@ -1,5 +1,7 @@
 "use strict";
 
+import MessagingManager from "/core/background/messaging-manager.js"
+
 var AuthenticationManager = (async function () {
 
     let tokens = {};
@@ -7,16 +9,14 @@ var AuthenticationManager = (async function () {
     /**
      * Returns a current authorisation token for the given host, if any exists. If one does not exist, start listening to all requests from hosts and return token when one is found
      */
-    browser.runtime.onMessage.addListener((request, sender, response) => {
-        if (request?.getAuthenticationToken) {
-            let host = extractDomain(sender.url);
-            let token = tokens[host];
-            if (!token) {
-                listenForAllRequests(host);
-                return awaitToken(host, tokens[host]);
-            }
-            return Promise.resolve(token);
+    MessagingManager.addGlobalListener("getAuthenticationToken", (message, sender) => {
+        let host = extractDomain(sender.url);
+        let token = tokens[host];
+        if (!token || token?.endsWith("undefined")) {
+            listenForAllRequests(host);
+            return awaitToken(host, tokens[host]);
         }
+        return Promise.resolve(token);
     });
 
     /**
@@ -57,8 +57,9 @@ var AuthenticationManager = (async function () {
             for(let host of hosts) {
                 let generalConfig = await ConfigurationManager.getHostConfig(host, "general");
                 let apiPort = generalConfig.apiPort ? ":" + generalConfig.apiPort : "";
-                urls.push(`https://${extractDomain(host)}${apiPort}${SiemplifyEndpoints.API_CHECK_SESSION}`);
+                urls.push(`https://${extractDomain(host)}${apiPort}${SiemplifyEndpoints.API_CHECK_SESSION}*`);
             };
+            console.log(urls)
             browser.webRequest.onBeforeSendHeaders.removeListener(handleRequest)
             browser.webRequest.onBeforeSendHeaders.addListener(handleRequest, { urls: urls, types:["xmlhttprequest"] }, ["requestHeaders"]);
         }
@@ -107,12 +108,13 @@ var AuthenticationManager = (async function () {
         tokens[host] = authorisationHeader.value;
         let tabs = await browser.tabs.query( {url: "https://"+host+"/*"})
         for (let tab of tabs) {
-            browser.tabs.sendMessage(tab.id, {"authenticationToken": authorisationHeader.value })
+            MessagingManager.sendMessage(tab.id, "authenticationToken", {"authenticationToken": authorisationHeader.value })
             .catch(() => {});
         }
     }
 
     var handleAllRequest = function(details) {
+        console.log("handleallrequests")
         let authorisationHeader = details.requestHeaders.find(header => header.name === "Authorization");
         if (authorisationHeader && authorisationHeader.value) {
             browser.webRequest.onBeforeSendHeaders.removeListener(handleAllRequest)
@@ -127,3 +129,5 @@ var AuthenticationManager = (async function () {
     checkPermissions();
 
 })();
+
+export default AuthenticationManager;
